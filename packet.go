@@ -662,7 +662,8 @@ type sshFxpOpenPacket struct {
 	ID     uint32
 	Path   string
 	Pflags uint32
-	Flags  uint32 // ignored
+	Flags  uint32
+	Mode   uint32
 }
 
 func (p *sshFxpOpenPacket) id() uint32 { return p.ID }
@@ -670,7 +671,7 @@ func (p *sshFxpOpenPacket) id() uint32 { return p.ID }
 func (p *sshFxpOpenPacket) MarshalBinary() ([]byte, error) {
 	l := 4 + 1 + 4 + // uint32(length) + byte(type) + uint32(id)
 		4 + len(p.Path) +
-		4 + 4
+		4 + 4 + 4
 
 	b := make([]byte, 4, l)
 	b = append(b, sshFxpOpen)
@@ -678,6 +679,7 @@ func (p *sshFxpOpenPacket) MarshalBinary() ([]byte, error) {
 	b = marshalString(b, p.Path)
 	b = marshalUint32(b, p.Pflags)
 	b = marshalUint32(b, p.Flags)
+	b = marshalUint32(b, p.Mode)
 
 	return b, nil
 }
@@ -691,6 +693,8 @@ func (p *sshFxpOpenPacket) UnmarshalBinary(b []byte) error {
 	} else if p.Pflags, b, err = unmarshalUint32Safe(b); err != nil {
 		return err
 	} else if p.Flags, _, err = unmarshalUint32Safe(b); err != nil {
+		return err
+	} else if p.Mode, _, err = unmarshalUint32Safe(b); err != nil {
 		return err
 	}
 	return nil

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -446,7 +447,12 @@ func (p *sshFxpOpenPacket) respond(svr *Server) responsePacket {
 		osFlags |= os.O_EXCL
 	}
 
-	f, err := os.OpenFile(toLocalPath(p.Path), osFlags, 0644)
+	mode := uint32(0666)
+	if (p.Flags & sshFileXferAttrPermissions) != 0 {
+		mode = p.Mode
+	}
+
+	f, err := os.OpenFile(toLocalPath(p.Path), osFlags, fs.FileMode(mode))
 	if err != nil {
 		return statusFromError(p.ID, err)
 	}
